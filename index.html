@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SidJet Pack - GTA Style Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #0c1a2d, #1a3a5f);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            color: white;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 500px;
+            height: 700px;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background-color: #0c1a2d;
+            border: 3px solid #f0a30a;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background-color: #0c1a2d;
+        }
+        
+        .game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .score-container, .high-score-container, .boost-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            border: 2px solid #f0a30a;
+            font-size: 16px;
+        }
+        
+        .boost-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .boost-fill {
+            height: 100%;
+            background: linear-gradient(to right, #00a8ff, #00ff9d);
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            z-index: 20;
+            display: none;
+            width: 80%;
+            border: 3px solid #f0a30a;
+        }
+        
+        .game-over h2 {
+            color: #f0a30a;
+            margin-bottom: 15px;
+            font-size: 32px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .game-over p {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #fff;
+        }
+        
+        .restart-btn {
+            background-color: #f0a30a;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .restart-btn:hover {
+            background-color: #ffc107;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            z-index: 10;
+        }
+        
+        .control-btn {
+            background-color: rgba(240, 163, 10, 0.9);
+            border: none;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            border: 1px solid #f0a30a;
+            line-height: 1.4;
+        }
+        
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #f0a30a;
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 3px 3px 0 #000;
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .powerup-info {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #f0a30a;
+            font-size: 12px;
+            width: 200px;
+        }
+        
+        .powerup-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .powerup-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        
+        .jetpack-fire {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background: linear-gradient(to top, #ff4500, #ff8c00, #ffd700);
+            border-radius: 50% 50% 0 0;
+            display: none;
+        }
+        
+        .wanted-level {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 20px;
+            color: #ff0000;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 10px;
+            border: 2px solid #ff0000;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .warning {
+            color: #ff4444;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">SidJet Pack</div>
+        <div class="game-ui">
+            <div class="score-container">Очки: <span id="score">0</span></div>
+            <div class="high-score-container">Рекорд: <span id="high-score">0</span></div>
+            <div class="boost-container">
+                <div>Реактивный ранец: <span id="boost-percent">100%</span></div>
+                <div class="boost-bar">
+                    <div class="boost-fill" id="boost-fill"></div>
+                </div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="500" height="700"></canvas>
+        
+        <div class="wanted-level" id="wanted-level">★ ПОЛИЦИЯ! ★</div>
+        
+        <div class="controls">
+            <button class="control-btn" id="left-btn">←</button>
+            <button class="control-btn" id="boost-btn">▲</button>
+            <button class="control-btn" id="right-btn">→</button>
+        </div>
+        
+        <div class="instructions">
+            <span class="warning">←→ Двигаться | ▲ Реактивный ранец | Избегай полицию!</span><br>
+            Собирай огонь для реактивного ранца и пружины для высоких прыжков
+        </div>
+        
+        <div class="powerup-info">
+            <div class="powerup-item">
+                <div class="powerup-icon" style="background-color: #ff4500;"></div>
+                <span>Огонь для реактивного ранца (+25%)</span>
+            </div>
+            <div class="powerup-item">
+                <div class="powerup-icon" style="background-color: #00ff00;"></div>
+                <span>Пружина (Высокий прыжок)</span>
+            </div>
+            <div class="powerup-item">
+                <div class="powerup-icon" style="background-color: #0000ff;"></div>
+                <span class="warning">Полиция (Сброс очков!)</span>
+            </div>
+        </div>
+        
+        <div class="game-over" id="game-over-screen">
+            <h2>Вас арестовали!</h2>
+            <p>Ваш счет: <span id="final-score">0</span></p>
+            <p>Рекорд: <span id="final-high-score">0</span></p>
+            <button class="restart-btn" id="restart-btn">Попробовать снова</button>
+        </div>
+    </div>
+
+    <script>
+        // Получаем элементы DOM
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('high-score');
+        const finalScoreElement = document.getElementById('final-score');
+        const finalHighScoreElement = document.getElementById('final-high-score');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const restartBtn = document.getElementById('restart-btn');
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const boostBtn = document.getElementById('boost-btn');
+        const boostPercentElement = document.getElementById('boost-percent');
+        const boostFillElement = document.getElementById('boost-fill');
+        const wantedLevelElement = document.getElementById('wanted-level');
+        
+        // Игровые переменные
+        let player = {
+            x: canvas.width / 2 - 20,
+            y: canvas.height - 150,
+            width: 40,
+            height: 60,
+            velocityX: 0,
+            velocityY: 0,
+            color: '#3498db',
+            boost: 100,
+            isBoosting: false,
+            jetpackColor: '#1E1E1E'
+        };
+        
+        let buildings = [];
+        let powerups = [];
+        let police = [];
+        let score = 0;
+        let highScore = localStorage.getItem('sidjetHighScore') || 0;
+        let gameRunning = true;
+        let keys = {};
+        let scrollOffset = 0;
+        let buildingCount = 15;
+        let gravity = 0.3;
+        let jumpForce = -9;
+        let boostForce = -12;
+        let policeActive = false;
+        let policeTimer = 0;
+        let springForce = -18;
+        let particles = [];
+        
+        // Устанавливаем рекорд
+        highScoreElement.textContent = highScore;
+        boostFillElement.style.width = '100%';
+        
+        // Создаем здания
+        function createBuildings() {
+            buildings = [];
+            powerups = [];
+            police = [];
+            particles = [];
+            
+            // Первое здание под игроком
+            buildings.push({
+                x: canvas.width / 2 - 60,
+                y: canvas.height - 80,
+                width: 120,
+                height: 30,
+                color: '#555',
+                windows: true,
+                hasPolice: false,
+                hasPowerup: 'none'
+            });
+            
+            // Создаем остальные здания
+            for (let i = 0; i < buildingCount; i++) {
+                let width = 70 + Math.random() * 80;
+                let hasPolice = Math.random() < 0.25; // 25% шанс появления полиции
+                let hasPowerup = 'none';
+                
+                // Если нет полиции, может быть усиление
+                if (!hasPolice) {
+                    if (Math.random() < 0.3) { // 30% шанс на огонь для реактивного ранца
+                        hasPowerup = 'fire';
+                    } else if (Math.random() < 0.25) { // 25% шанс на пружину
+                        hasPowerup = 'spring';
+                    }
+                }
+                
+                let building = {
+                    x: Math.random() * (canvas.width - width),
+                    y: Math.random() * canvas.height / 1.5,
+                    width: width,
+                    height: 30,
+                    color: hasPolice ? '#223355' : '#555',
+                    windows: true,
+                    hasPolice: hasPolice,
+                    hasPowerup: hasPowerup
+                };
+                
+                buildings.push(building);
+                
+                // Добавляем полицию на здание
+                if (hasPolice) {
+                    police.push({
+                        x: Math.random() * (width - 20) + building.x,
+                        y: building.y - 30,
+                        width: 20,
+                        height: 30,
+                        color: '#0000ff',
+                        buildingIndex: buildings.length - 1
+                    });
+                }
+                
+                // Добавляем усиления на здание
+                if (hasPowerup !== 'none') {
+                    powerups.push({
+                        x: Math.random() * (width - 20) + building.x,
+                        y: building.y - 15,
+                        width: 20,
+                        height: 20,
+                        type: hasPowerup,
+                        color: hasPowerup === 'fire' ? '#ff4500' : '#00ff00',
+                        buildingIndex: buildings.length - 1,
+                        collected: false
+                    });
+                }
+            }
+        }
+        
+        // Создаем частицы для эффектов
+        function createParticles(x, y, count, color) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    size: Math.random() * 5 + 2,
+                    speedX: Math.random() * 6 - 3,
+                    speedY: Math.random() * 6 - 3,
+                    color: color,
+                    life: 30
+                });
+            }
+        }
+        
+        // Обновление частиц
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+                p.life--;
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Обработка нажатий клавиш
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            
+            // Активация реактивного ранца по пробелу
+            if (e.code === 'Space' && player.boost > 0) {
+                player.isBoosting = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            
+            // Деактивация реактивного ранца
+            if (e.code === 'Space') {
+                player.isBoosting = false;
+            }
+        });
+        
+        // Обработка нажатий кнопок на экране
+        leftBtn.addEventListener('mousedown', () => {
+            keys['arrowleft'] = true;
+            keys['a'] = true;
+        });
+        
+        leftBtn.addEventListener('mouseup', () => {
+            keys['arrowleft'] = false;
+            keys['a'] = false;
+        });
+        
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys['arrowleft'] = true;
+            keys['a'] = true;
+        });
+        
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys['arrowleft'] = false;
+            keys['a'] = false;
+        });
+        
+        rightBtn.addEventListener('mousedown', () => {
+            keys['arrowright'] = true;
+            keys['d'] = true;
+        });
+        
+        rightBtn.addEventListener('mouseup', () => {
+            keys['arrowright'] = false;
+            keys['d'] = false;
+        });
+        
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys['arrowright'] = true;
+            keys['d'] = true;
+        });
+        
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys['arrowright'] = false;
+            keys['d'] = false;
+        });
+        
+        boostBtn.addEventListener('mousedown', () => {
+            if (player.boost > 0) {
+                player.isBoosting = true;
+            }
+        });
+        
+        boostBtn.addEventListener('mouseup', () => {
+            player.isBoosting = false;
+        });
+        
+        boostBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (player.boost > 0) {
+                player.isBoosting = true;
+            }
+        });
+        
+        boostBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.isBoosting = false;
+        });
+        
+        // Обновление игры
+        function update() {
+            if (!gameRunning) return;
+            
+            // Управление игроком
+            player.velocityX = 0;
+            if (keys['arrowleft'] || keys['a']) {
+                player.velocityX = -6;
+            }
+            if (keys['arrowright'] || keys['d']) {
+                player.velocityX = 6;
+            }
+            
+            // Реактивный ранец
+            if (player.isBoosting && player.boost > 0) {
+                player.velocityY = boostForce;
+                player.boost -= 0.8;
+                if (player.boost < 0) player.boost = 0;
+                
+                // Создаем частицы огня
+                if (Math.random() < 0.3) {
+                    createParticles(
+                        player.x + player.width/2, 
+                        player.y + player.height, 
+                        2, 
+                        '#ff4500'
+                    );
+                }
+            } else {
+                // Применяем гравитацию
+                player.velocityY += gravity;
+            }
+            
+            // Обновляем позицию игрока
+            player.x += player.velocityX;
+            player.y += player.velocityY;
+            
+            // Ограничиваем движение игрока по горизонтали
+            if (player.x < 0) player.x = canvas.width;
+            if (player.x > canvas.width) player.x = 0;
+            
+            // Проверяем столкновение со зданиями
+            for (let i = 0; i < buildings.length; i++) {
+                let building = buildings[i];
+                
+                if (
+                    player.velocityY > 0 &&
+                    player.x < building.x + building.width &&
+                    player.x + player.width > building.x &&
+                    player.y + player.height > building.y &&
+                    player.y + player.height < building.y + building.height
+                ) {
+                    // Проверяем, есть ли на здании полиция
+                    if (building.hasPolice) {
+                        // Активируем полицию
+                        policeActive = true;
+                        policeTimer = 180; // 3 секунды при 60 FPS
+                        wantedLevelElement.style.display = 'block';
+                        
+                        // Сбрасываем счет
+                        score = 0;
+                        scoreElement.textContent = score;
+                        
+                        // Создаем частицы для эффекта
+                        createParticles(
+                            player.x + player.width/2,
+                            player.y,
+                            20,
+                            '#ff0000'
+                        );
+                        
+                        // Сбрасываем позицию игрока
+                        player.y = building.y - player.height;
+                        player.velocityY = jumpForce * 1.5;
+                        break;
+                    }
+                    
+                    // Обычный прыжок
+                    player.velocityY = jumpForce;
+                    player.y = building.y - player.height;
+                    
+                    // Проверяем, есть ли на здании усиление
+                    for (let j = 0; j < powerups.length; j++) {
+                        let powerup = powerups[j];
+                        
+                        if (!powerup.collected && 
+                            player.x < powerup.x + powerup.width &&
+                            player.x + player.width > powerup.x &&
+                            player.y < powerup.y + powerup.height &&
+                            player.y + player.height > powerup.y
+                        ) {
+                            // Подбираем усиление
+                            if (powerup.type === 'fire') {
+                                player.boost += 25;
+                                if (player.boost > 100) player.boost = 100;
+                                boostPercentElement.textContent = Math.round(player.boost) + '%';
+                                boostFillElement.style.width = player.boost + '%';
+                                
+                                // Эффект сбора
+                                createParticles(
+                                    powerup.x + powerup.width/2,
+                                    powerup.y + powerup.height/2,
+                                    15,
+                                    '#ff4500'
+                                );
+                            } else if (powerup.type === 'spring') {
+                                player.velocityY = springForce;
+                                player.y -= 10;
+                                
+                                // Эффект пружины
+                                createParticles(
+                                    player.x + player.width/2,
+                                    player.y,
+                                    20,
+                                    '#00ff00'
+                                );
+                            }
+                            
+                            // Помечаем усиление как собранное
+                            powerup.collected = true;
+                            
+                            // Добавляем очки за усиление
+                            score += 50;
+                            scoreElement.textContent = score;
+                        }
+                    }
+                }
+            }
+            
+            // Обновляем таймер полиции
+            if (policeActive) {
+                policeTimer--;
+                if (policeTimer <= 0) {
+                    policeActive = false;
+                    wantedLevelElement.style.display = 'none';
+                }
+            }
+            
+            // Обновляем частицы
+            updateParticles();
+            
+            // Прокрутка мира вниз, когда игрок поднимается
+            if (player.y < canvas.height / 2 && player.velocityY < 0) {
+                scrollOffset += -player.velocityY;
+                
+                // Перемещаем здания вниз
+                for (let i = 0; i < buildings.length; i++) {
+                    buildings[i].y += -player.velocityY;
+                    
+                    // Перемещаем полицию, связанную с этим зданием
+                    for (let p of police) {
+                        if (p.buildingIndex === i) {
+                            p.y += -player.velocityY;
+                        }
+                    }
+                    
+                    // Перемещаем усиления, связанные с этим зданием
+                    for (let p of powerups) {
+                        if (p.buildingIndex === i) {
+                            p.y += -player.velocityY;
+                        }
+                    }
+                    
+                    // Если здание ушло за нижний край экрана, перемещаем его наверх
+                    if (buildings[i].y > canvas.height) {
+                        buildings[i].y = -scrollOffset - 50;
+                        buildings[i].x = Math.random() * (canvas.width - buildings[i].width);
+                        
+                        // Обновляем наличие полиции и усилений
+                        buildings[i].hasPolice = Math.random() < 0.25;
+                        buildings[i].color = buildings[i].hasPolice ? '#223355' : '#555';
+                        
+                        // Удаляем старую полицию с этого здания
+                        for (let j = police.length - 1; j >= 0; j--) {
+                            if (police[j].buildingIndex === i) {
+                                police.splice(j, 1);
+                            }
+                        }
+                        
+                        // Добавляем новую полицию
+                        if (buildings[i].hasPolice) {
+                            police.push({
+                                x: Math.random() * (buildings[i].width - 20) + buildings[i].x,
+                                y: buildings[i].y - 30,
+                                width: 20,
+                                height: 30,
+                                color: '#0000ff',
+                                buildingIndex: i
+                            });
+                        }
+                        
+                        // Удаляем старые усиления с этого здания
+                        for (let j = powerups.length - 1; j >= 0; j--) {
+                            if (powerups[j].buildingIndex === i) {
+                                powerups.splice(j, 1);
+                            }
+                        }
+                        
+                        // Определяем тип усиления
+                        let powerupType = 'none';
+                        if (!buildings[i].hasPolice) {
+                            if (Math.random() < 0.3) {
+                                powerupType = 'fire';
+                            } else if (Math.random() < 0.25) {
+                                powerupType = 'spring';
+                            }
+                        }
+                        
+                        buildings[i].hasPowerup = powerupType;
+                        
+                        // Добавляем новое усиление
+                        if (powerupType !== 'none') {
+                            powerups.push({
+                                x: Math.random() * (buildings[i].width - 20) + buildings[i].x,
+                                y: buildings[i].y - 15,
+                                width: 20,
+                                height: 20,
+                                type: powerupType,
+                                color: powerupType === 'fire' ? '#ff4500' : '#00ff00',
+                                buildingIndex: i,
+                                collected: false
+                            });
+                        }
+                        
+                        // Добавляем очки за каждое пройденное здание
+                        score += 25;
+                        scoreElement.textContent = score;
+                    }
+                }
+                
+                // Удаляем полицию, которая ушла за экран
+                for (let i = police.length - 1; i >= 0; i--) {
+                    if (police[i].y > canvas.height) {
+                        police.splice(i, 1);
+                    }
+                }
+                
+                // Удаляем усиления, которые ушли за экран
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    if (powerups[i].y > canvas.height) {
+                        powerups.splice(i, 1);
+                    }
+                }
+                
+                // Добавляем очки за высоту
+                score += Math.round(-player.velocityY * 0.5);
+                scoreElement.textContent = score;
+            }
+            
+            // Обновляем отображение реактивного ранца
+            boostPercentElement.textContent = Math.round(player.boost) + '%';
+            boostFillElement.style.width = player.boost + '%';
+            
+            // Проверяем, упал ли игрок
+            if (player.y > canvas.height) {
+                gameOver();
+            }
+            
+            // Обновляем рекорд
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = highScore;
+                localStorage.setItem('sidjetHighScore', highScore);
+            }
+        }
+        
+        // Отрисовка игры
+        function draw() {
+            // Очищаем канвас
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем фон ночного города
+            drawBackground();
+            
+            // Рисуем здания
+            for (let building of buildings) {
+                // Основное здание
+                ctx.fillStyle = building.color;
+                ctx.fillRect(building.x, building.y, building.width, building.height);
+                
+                // Крыша
+                ctx.fillStyle = '#333';
+                ctx.fillRect(building.x - 5, building.y - 5, building.width + 10, 5);
+                
+                // Окна
+                if (building.windows) {
+                    ctx.fillStyle = '#ffd700';
+                    let windowCount = Math.floor(building.width / 15);
+                    for (let w = 0; w < windowCount; w++) {
+                        if (Math.random() > 0.3) { // 70% шанс что окно светится
+                            ctx.fillRect(building.x + 5 + w * 15, building.y + 5, 8, 10);
+                        }
+                    }
+                }
+                
+                // Боковые стены
+                ctx.fillStyle = '#444';
+                ctx.fillRect(building.x, building.y + building.height, 5, 10);
+                ctx.fillRect(building.x + building.width - 5, building.y + building.height, 5, 10);
+            }
+            
+            // Рисуем полицию
+            for (let officer of police) {
+                // Тело полицейского
+                ctx.fillStyle = officer.color;
+                ctx.fillRect(officer.x, officer.y, officer.width, officer.height);
+                
+                // Голова
+                ctx.fillStyle = '#ffcc99';
+                ctx.fillRect(officer.x + 5, officer.y - 10, 10, 10);
+                
+                // Фуражка
+                ctx.fillStyle = '#0000ff';
+                ctx.fillRect(officer.x + 3, officer.y - 12, 14, 4);
+                
+                // Мигающий свет (если активна полиция)
+                if (policeActive && Math.floor(Date.now() / 200) % 2 === 0) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(officer.x + 2, officer.y - 5, 4, 4);
+                    ctx.fillRect(officer.x + officer.width - 6, officer.y - 5, 4, 4);
+                }
+            }
+            
+            // Рисуем усиления
+            for (let powerup of powerups) {
+                if (powerup.collected) continue;
+                
+                ctx.fillStyle = powerup.color;
+                
+                if (powerup.type === 'fire') {
+                    // Огонь для реактивного ранца
+                    ctx.beginPath();
+                    ctx.moveTo(powerup.x + powerup.width/2, powerup.y);
+                    ctx.lineTo(powerup.x + powerup.width, powerup.y + powerup.height);
+                    ctx.lineTo(powerup.x, powerup.y + powerup.height);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Внутренний огонь
+                    ctx.fillStyle = '#ff8c00';
+                    ctx.beginPath();
+                    ctx.moveTo(powerup.x + powerup.width/2, powerup.y + 3);
+                    ctx.lineTo(powerup.x + powerup.width - 5, powerup.y + powerup.height - 3);
+                    ctx.lineTo(powerup.x + 5, powerup.y + powerup.height - 3);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Анимация огня
+                    if (Math.floor(Date.now() / 200) % 2 === 0) {
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath();
+                        ctx.moveTo(powerup.x + powerup.width/2, powerup.y - 2);
+                        ctx.lineTo(powerup.x + powerup.width - 3, powerup.y + powerup.height - 5);
+                        ctx.lineTo(powerup.x + 3, powerup.y + powerup.height - 5);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                } else if (powerup.type === 'spring') {
+                    // Пружина
+                    ctx.fillRect(powerup.x, powerup.y, powerup.width, 5);
+                    ctx.fillRect(powerup.x, powerup.y + 7, powerup.width, 5);
+                    ctx.fillRect(powerup.x, powerup.y + 14, powerup.width, 5);
+                    
+                    // Боковые части
+                    ctx.fillRect(powerup.x, powerup.y + 2, 3, 13);
+                    ctx.fillRect(powerup.x + powerup.width - 3, powerup.y + 2, 3, 13);
+                    
+                    // Анимация пружины
+                    if (Math.floor(Date.now() / 300) % 2 === 0) {
+                        ctx.fillStyle = '#90ee90';
+                        ctx.fillRect(powerup.x + 2, powerup.y + 1, powerup.width - 4, 16);
+                    }
+                }
+            }
+            
+            // Рисуем частицы
+            for (let p of particles) {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 30;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            
+            // Рисуем игрока (Сиджея)
+            drawPlayer();
+            
+            // Рисуем огонь из реактивного ранца при использовании
+            if (player.isBoosting && player.boost > 0) {
+                drawJetpackFire();
+            }
+        }
+        
+        // Рисуем игрока (Сиджея)
+        function drawPlayer() {
+            // Тело
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Реактивный ранец
+            ctx.fillStyle = player.jetpackColor;
+            ctx.fillRect(player.x + 5, player.y + 40, 30, 15);
+            ctx.fillRect(player.x + 10, player.y + 35, 20, 5);
+            
+            // Голова
+            ctx.fillStyle = '#ffcc99';
+            ctx.fillRect(player.x + 10, player.y + 5, 20, 20);
+            
+            // Волосы
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(player.x + 10, player.y, 20, 5);
+            
+            // Очки
+            ctx.fillStyle = '#000';
+            ctx.fillRect(player.x + 12, player.y + 10, 6, 2);
+            ctx.fillRect(player.x + 22, player.y + 10, 6, 2);
+            ctx.fillRect(player.x + 18, player.y + 10, 4, 1);
+            
+            // Рот
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(player.x + 15, player.y + 18, 10, 3);
+            
+            // Рубашка
+            ctx.fillStyle = '#c00';
+            ctx.fillRect(player.x, player.y + 25, player.width, 15);
+            
+            // Брюки
+            ctx.fillStyle = '#333';
+            ctx.fillRect(player.x, player.y + 40, 15, 20);
+            ctx.fillRect(player.x + 25, player.y + 40, 15, 20);
+        }
+        
+        // Рисуем огонь из реактивного ранца
+        function drawJetpackFire() {
+            // Внешний слой огня
+            ctx.fillStyle = '#ff4500';
+            ctx.beginPath();
+            ctx.moveTo(player.x + 10, player.y + 55);
+            ctx.lineTo(player.x + 15, player.y + 75);
+            ctx.lineTo(player.x + 25, player.y + 75);
+            ctx.lineTo(player.x + 30, player.y + 55);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Средний слой огня
+            ctx.fillStyle = '#ff8c00';
+            ctx.beginPath();
+            ctx.moveTo(player.x + 12, player.y + 58);
+            ctx.lineTo(player.x + 17, player.y + 72);
+            ctx.lineTo(player.x + 23, player.y + 72);
+            ctx.lineTo(player.x + 28, player.y + 58);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Внутренний слой огня
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.moveTo(player.x + 14, player.y + 61);
+            ctx.lineTo(player.x + 18, player.y + 69);
+            ctx.lineTo(player.x + 22, player.y + 69);
+            ctx.lineTo(player.x + 26, player.y + 61);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Искры
+            if (Math.random() < 0.3) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(
+                    player.x + 15 + Math.random() * 10, 
+                    player.y + 75 + Math.random() * 5, 
+                    Math.random() * 2 + 1, 
+                    0, 
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+        
+        // Рисуем фон ночного города
+        function drawBackground() {
+            // Ночное небо
+            ctx.fillStyle = '#0c1a2d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Луна
+            ctx.fillStyle = '#f5f5dc';
+            ctx.beginPath();
+            ctx.arc(400, 80, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Звезды
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 100; i++) {
+                let x = (i * 7) % canvas.width;
+                let y = (i * 5) % 300;
+                let size = Math.random() * 2 + 0.5;
+                let alpha = Math.random() * 0.5 + 0.5;
+                ctx.globalAlpha = alpha;
+                ctx.fillRect(x, y, size, size);
+            }
+            ctx.globalAlpha = 1;
+            
+            // Далёкие небоскребы
+            ctx.fillStyle = '#111';
+            for (let i = 0; i < 15; i++) {
+                let x = i * 35;
+                let height = 80 + Math.random() * 120;
+                ctx.fillRect(x, 400 - height, 30, height);
+                
+                // Окна в далёких зданиях
+                ctx.fillStyle = '#1a3a5f';
+                for (let w = 0; w < 3; w++) {
+                    for (let h = 0; h < 6; h++) {
+                        if (Math.random() > 0.7) {
+                            ctx.fillRect(x + 5 + w * 8, 410 - height + h * 15, 5, 8);
+                        }
+                    }
+                }
+                ctx.fillStyle = '#111';
+            }
+        }
+        
+        // Конец игры
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = score;
+            finalHighScoreElement.textContent = highScore;
+            gameOverScreen.style.display = 'block';
+        }
+        
+        // Перезапуск игры
+        function restartGame() {
+            player = {
+                x: canvas.width / 2 - 20,
+                y: canvas.height - 150,
+                width: 40,
+                height: 60,
+                velocityX: 0,
+                velocityY: 0,
+                color: '#3498db',
+                boost: 100,
+                isBoosting: false,
+                jetpackColor: '#1E1E1E'
+            };
+            
+            score = 0;
+            scrollOffset = 0;
+            policeActive = false;
+            policeTimer = 0;
+            scoreElement.textContent = score;
+            gameRunning = true;
+            gameOverScreen.style.display = 'none';
+            wantedLevelElement.style.display = 'none';
+            boostPercentElement.textContent = '100%';
+            boostFillElement.style.width = '100%';
+            
+            createBuildings();
+        }
+        
+        // Игровой цикл
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Инициализация игры
+        function init() {
+            createBuildings();
+            gameLoop();
+            
+            // Обработчик кнопки рестарта
+            restartBtn.addEventListener('click', restartGame);
+            
+            // Обработчик для рестарта по нажатию Enter
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Enter' && !gameRunning) {
+                    restartGame();
+                }
+            });
+        }
+        
+        // Запускаем игру
+        init();
+    </script>
+</body>
+</html>
